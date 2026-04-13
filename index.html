@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Trust — Assistant de coaching</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: #F5F0E8; color: #2C1810; min-height: 100vh; }
+
+.app-wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+.app-title { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+.app-sub { font-size: 13px; color: #888; margin-bottom: 20px; }
+
+.tab-bar { display: flex; background: #EDE8DF; border-radius: 12px 12px 0 0; border-bottom: 0.5px solid #D4CFC6; }
+.tab { padding: 10px 18px; font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; color: #888; transition: all 0.15s; border-radius: 8px 8px 0 0; }
+.tab.active { color: #2C1810; border-bottom-color: #6B1A2A; background: #fff; }
+.tab:hover:not(.active) { background: #fff; opacity: 0.7; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* COACH CONFIG */
+.coach-grid { display: grid; grid-template-columns: 220px 1fr; min-height: 580px; border: 0.5px solid #D4CFC6; border-radius: 0 0 12px 12px; overflow: hidden; }
+.coach-sb { background: #EDE8DF; border-right: 0.5px solid #D4CFC6; padding: 14px; overflow-y: auto; }
+.coach-main { background: #fff; padding: 18px; overflow-y: auto; }
+.slabel { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: #aaa; margin: 14px 0 6px; }
+.slabel:first-child { margin-top: 0; }
+.cfg { margin-bottom: 10px; }
+.cfg label { font-size: 12px; color: #666; display: block; margin-bottom: 3px; }
+.cfg input, .cfg select, .cfg textarea { width: 100%; font-size: 13px; padding: 6px 8px; border: 0.5px solid #D4CFC6; border-radius: 8px; background: #fff; color: #2C1810; resize: vertical; }
+.cfg textarea { min-height: 50px; }
+.pills { display: flex; gap: 5px; flex-wrap: wrap; }
+.pill { padding: 4px 10px; font-size: 12px; border-radius: 20px; border: 0.5px solid #D4CFC6; cursor: pointer; background: #fff; color: #666; transition: all 0.15s; }
+.pill.on { background: #6B1A2A; color: #F5F0E8; border-color: #6B1A2A; }
+.ccard { background: #fff; border: 0.5px solid #D4CFC6; border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
+.ccard:hover, .ccard.sel { border-color: #6B1A2A; }
+.ccard.sel { background: #FFF9F8; }
+.cname { font-size: 13px; font-weight: 500; }
+.cmeta { font-size: 11px; color: #888; margin-top: 1px; }
+.cbadge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 10px; margin-top: 5px; font-weight: 500; }
+.ba { background: #E1F5EE; color: #0F6E56; }
+.br { background: #FAEEDA; color: #854F0B; }
+.bb { background: #EEEDFE; color: #3C3489; }
+.pbtn { width: 100%; padding: 8px; background: #6B1A2A; color: #F5F0E8; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; }
+.pbtn:hover { opacity: 0.85; }
+.interdit-list { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
+.interdit-tag { font-size: 11px; padding: 3px 8px; border-radius: 10px; background: #FCEBEB; color: #A32D2D; border: 0.5px solid #F09595; display: flex; align-items: center; gap: 4px; }
+.interdit-tag button { background: none; border: none; cursor: pointer; color: #A32D2D; font-size: 12px; padding: 0; }
+.prompt-preview { background: #F5F0E8; border: 0.5px solid #D4CFC6; border-radius: 8px; padding: 12px; font-size: 11px; color: #666; max-height: 200px; overflow-y: auto; white-space: pre-wrap; line-height: 1.6; font-family: monospace; margin-top: 4px; }
+
+/* SUPERVISION */
+.supervision-wrap { display: grid; grid-template-columns: 1fr 260px; min-height: 580px; border: 0.5px solid #D4CFC6; border-radius: 0 0 12px 12px; overflow: hidden; }
+.sup-feed { background: #fff; padding: 16px; overflow-y: auto; }
+.sup-sidebar { background: #EDE8DF; border-left: 0.5px solid #D4CFC6; padding: 13px; overflow-y: auto; }
+.iblock { background: #fff; border: 0.5px solid #D4CFC6; border-radius: 12px; padding: 11px; margin-bottom: 9px; }
+.ititle { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #aaa; margin-bottom: 6px; }
+.ival { font-size: 13px; font-weight: 500; }
+.isub { font-size: 11px; color: #888; margin-top: 2px; }
+.dec-item { font-size: 12px; padding: 3px 0; border-bottom: 0.5px solid #eee; color: #666; }
+.dec-item:last-child { border-bottom: none; }
+.dec-item::before { content: "✓ "; color: #1D9E75; font-weight: 500; }
+.val-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 0.5px solid #eee; font-size: 12px; }
+.val-row:last-child { border-bottom: none; }
+.val-score { font-size: 12px; font-weight: 500; }
+.score-ok { color: #0F6E56; } .score-fb { color: #854F0B; } .score-ko { color: #A32D2D; }
+.qbar { height: 3px; border-radius: 2px; background: #EDE8DF; overflow: hidden; margin-top: 3px; }
+.qfill { height: 100%; border-radius: 2px; background: #1D9E75; transition: width 0.4s; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.stat-cell { background: #EDE8DF; border-radius: 8px; padding: 7px 9px; text-align: center; }
+.stat-n { font-size: 18px; font-weight: 500; }
+.stat-l { font-size: 10px; color: #aaa; margin-top: 1px; }
+.val-badge { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 8px; }
+.val-ok { background: #E1F5EE; color: #0F6E56; }
+.val-fb { background: #FAEEDA; color: #854F0B; }
+.feed-msg { padding: 10px 13px; border-radius: 12px; margin-bottom: 8px; font-size: 13px; line-height: 1.5; border: 0.5px solid #D4CFC6; }
+.feed-user { background: #EDE8DF; border-left: 3px solid #6B1A2A; }
+.feed-ai { background: #fff; border-left: 3px solid #1D9E75; }
+.feed-fb { border-left-color: #854F0B; }
+.feed-meta { font-size: 10px; color: #aaa; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.07em; }
+.ptag-sm { font-size: 10px; font-weight: 500; padding: 1px 6px; border-radius: 6px; display: inline-block; margin-left: 6px; }
+.p-clarif { background: #FAEEDA; color: #854F0B; }
+.p-peur { background: #EEEDFE; color: #3C3489; }
+.p-action { background: #E1F5EE; color: #0F6E56; }
+.p-crise { background: #FCEBEB; color: #A32D2D; }
+.p-neutre { background: #EDE8DF; color: #aaa; }
+
+/* CLIENT */
+.client-shell { border: 0.5px solid #D4CFC6; border-radius: 0 0 12px 12px; overflow: hidden; min-height: 580px; display: flex; flex-direction: column; background: #fff; max-width: 540px; margin: 0 auto; }
+.client-header { padding: 14px 18px; background: #EDE8DF; border-bottom: 0.5px solid #D4CFC6; display: flex; align-items: center; gap: 12px; }
+.av { width: 36px; height: 36px; border-radius: 50%; background: #6B1A2A; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; color: #F5F0E8; flex-shrink: 0; }
+.ch-name { font-size: 14px; font-weight: 500; }
+.ch-sub { font-size: 12px; color: #888; }
+.ch-dot { width: 7px; height: 7px; border-radius: 50%; background: #1D9E75; margin-left: auto; flex-shrink: 0; }
+.onb { padding: 24px; display: flex; flex-direction: column; flex: 1; }
+.onb-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+.onb-sub { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.5; }
+.onb-f { margin-bottom: 14px; }
+.onb-f label { font-size: 13px; color: #666; display: block; margin-bottom: 5px; }
+.onb-f input { width: 100%; font-size: 14px; padding: 10px 12px; border: 0.5px solid #D4CFC6; border-radius: 8px; background: #fff; color: #2C1810; }
+.onb-f input:focus { outline: none; border-color: #6B1A2A; }
+.start-btn { padding: 12px; background: #6B1A2A; color: #F5F0E8; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; margin-top: 8px; }
+.start-btn:hover { opacity: 0.85; }
+.client-msgs { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 12px; min-height: 340px; max-height: 400px; }
+.cm-user { align-self: flex-end; max-width: 82%; background: #6B1A2A; color: #F5F0E8; padding: 11px 15px; border-radius: 12px 12px 4px 12px; font-size: 14px; line-height: 1.5; }
+.cm-ai { align-self: flex-start; max-width: 88%; background: #EDE8DF; border: 0.5px solid #D4CFC6; padding: 12px 15px; border-radius: 12px 12px 12px 4px; font-size: 14px; line-height: 1.6; }
+.cm-ai .rephrase { font-size: 13px; color: #888; font-style: italic; margin-bottom: 6px; }
+.cm-ai .reframe { margin-bottom: 7px; }
+.cm-ai .q { font-weight: 500; margin-bottom: 4px; }
+.cm-ai .micro { margin-top: 10px; padding: 8px 12px; background: #fff; border: 0.5px solid #D4CFC6; border-radius: 8px; font-size: 13px; color: #666; }
+.cm-ai .micro::before { content: "→ "; color: #6B1A2A; font-weight: 500; }
+.cm-ai .rappel-line { font-size: 12px; color: #aaa; font-style: italic; margin-bottom: 6px; }
+.dots span { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #aaa; margin: 0 2px; animation: bop 1s infinite; }
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bop{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
+.client-inp { padding: 12px 16px; border-top: 0.5px solid #D4CFC6; display: flex; gap: 8px; background: #fff; }
+.client-inp input { flex: 1; padding: 10px 14px; font-size: 14px; border: 0.5px solid #D4CFC6; border-radius: 8px; background: #fff; color: #2C1810; }
+.client-inp input:focus { outline: none; border-color: #6B1A2A; }
+.send-btn { padding: 10px 16px; background: #6B1A2A; color: #F5F0E8; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.send-btn:disabled { opacity: 0.4; cursor: default; }
+</style>
+</head>
+<body>
+<div class="app-wrap">
+  <div class="app-title">Trust</div>
+  <div class="app-sub">Assistant de continuité de coaching</div>
+
+  <div class="tab-bar">
+    <div class="tab active" onclick="sw('coach')">Coach — config</div>
+    <div class="tab" onclick="sw('supervision')">Coach — supervision</div>
+    <div class="tab" onclick="sw('client')">Client</div>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="p-coach" class="panel active">
+    <div class="coach-grid">
+      <div class="coach-sb">
+        <div class="slabel">Clients</div>
+        <div class="ccard sel" onclick="selC(this,'ines')"><div class="cname">Inès M.</div><div class="cmeta">Décision professionnelle</div><span class="cbadge ba">En action</span></div>
+        <div class="ccard" onclick="selC(this,'sezen')"><div class="cname">Sezen K.</div><div class="cmeta">Transition carrière</div><span class="cbadge br">Rumination</span></div>
+        <div class="ccard" onclick="selC(this,'manelle')"><div class="cname">Manelle B.</div><div class="cmeta">Surcharge cognitive</div><span class="cbadge bb">Blocage</span></div>
+        <div style="margin-top:14px"><button class="pbtn" onclick="saveC()">Sauvegarder</button></div>
+      </div>
+      <div class="coach-main" id="coach-body"></div>
+    </div>
+  </div>
+
+  <!-- SUPERVISION -->
+  <div id="p-supervision" class="panel">
+    <div class="supervision-wrap">
+      <div class="sup-feed">
+        <div style="font-size:12px;color:#aaa;margin-bottom:14px">Feed en temps réel — visible coach uniquement</div>
+        <div id="sup-feed-content"><div style="font-size:13px;color:#aaa;text-align:center;padding:40px 0">En attente de la session client…</div></div>
+      </div>
+      <div class="sup-sidebar">
+        <div class="iblock"><div class="ititle">Protocole actif</div><div class="ival" id="sup-proto">—</div><div class="isub" id="sup-proto-desc">En attente</div></div>
+        <div class="iblock"><div class="ititle">Contexte session</div><div class="ival" style="font-size:12px" id="sup-obj">—</div><div class="isub" id="sup-bloc">—</div></div>
+        <div class="iblock">
+          <div class="ititle">Validation réponse</div>
+          <div class="val-row"><span>Score contexte</span><span class="val-score" id="vs-ctx">—</span></div>
+          <div class="val-row"><span>Question présente</span><span class="val-score" id="vs-q">—</span></div>
+          <div class="val-row"><span>Longueur &lt; 600c</span><span class="val-score" id="vs-len">—</span></div>
+          <div class="val-row"><span>Score total</span><span class="val-score" id="vs-total">—</span></div>
+          <div class="val-row"><span>Statut</span><span class="val-badge" id="vs-status" style="background:#EDE8DF;color:#aaa">—</span></div>
+        </div>
+        <div class="iblock">
+          <div class="ititle">Qualité</div>
+          <div style="margin-bottom:5px"><div style="display:flex;justify-content:space-between;font-size:11px;color:#aaa"><span>Concision</span><span id="qv1">—</span></div><div class="qbar"><div class="qfill" id="qb1" style="width:0%"></div></div></div>
+          <div style="margin-bottom:5px"><div style="display:flex;justify-content:space-between;font-size:11px;color:#aaa"><span>Orientation action</span><span id="qv2">—</span></div><div class="qbar"><div class="qfill" id="qb2" style="width:0%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:11px;color:#aaa"><span>Anti-rumination</span><span id="qv3">—</span></div><div class="qbar"><div class="qfill" id="qb3" style="width:0%"></div></div></div>
+        </div>
+        <div class="iblock">
+          <div class="ititle">Session</div>
+          <div class="stat-grid">
+            <div class="stat-cell"><div class="stat-n" id="s-total">0</div><div class="stat-l">Messages</div></div>
+            <div class="stat-cell"><div class="stat-n" id="s-fb">0</div><div class="stat-l">Fallbacks</div></div>
+          </div>
+        </div>
+        <div class="iblock"><div class="ititle">Décisions en vigueur</div><div id="sup-dec"><div class="dec-item">—</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLIENT -->
+  <div id="p-client" class="panel">
+    <div class="client-shell">
+      <div class="client-header">
+        <div class="av">T</div>
+        <div><div class="ch-name">Trust</div><div class="ch-sub">Ton assistant entre les séances</div></div>
+        <div class="ch-dot"></div>
+      </div>
+      <div id="onboarding" class="onb">
+        <div class="onb-title">Avant de commencer</div>
+        <div class="onb-sub">Trust prolonge le travail avec ton coach.<br>3 questions pour calibrer la session.</div>
+        <div class="onb-f"><label>Ton objectif en ce moment</label><input type="text" id="onb-obj" placeholder="Ex : décider si je quitte mon poste" /></div>
+        <div class="onb-f"><label>Ce qui te bloque</label><input type="text" id="onb-bloc" placeholder="Ex : j'ai peur de me tromper" /></div>
+        <div class="onb-f"><label>Sur quoi tu travailles avec ton coach</label><input type="text" id="onb-coach" placeholder="Ex : clarifier ma prochaine étape" /></div>
+        <button class="start-btn" onclick="startSession()">Commencer la session →</button>
+      </div>
+      <div id="chat-area" style="display:none;flex-direction:column;flex:1">
+        <div class="client-msgs" id="msgs"></div>
+        <div class="client-inp">
+          <input type="text" id="ci" placeholder="Ce que tu vis maintenant…" onkeydown="if(event.key==='Enter')send()" />
+          <button class="send-btn" id="sbtn" onclick="send()">→</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CLIENTS = {
+  ines: { name:"Inès M.", objectif:"Décider si elle quitte son poste dans 6 semaines", blocage:"Peur du regard des autres", probleme:"Perfectionnisme et indécision chronique", ton:"challengeant", posture:"direct", priorite:"clarification", interdits:["validation de la passivité","conseils directs","analyse longue"], cadre:"1 session/sem. Pas de conseils directs. Pas de validation.", decisions:["Ne pas accepter de contre-offre","Explorer 2 pistes max"], patterns:["Stress dimanche soir","Évitement par sur-analyse"] },
+  sezen: { name:"Sezen K.", objectif:"Identifier le prochain poste cible d'ici 3 mois", blocage:"Paralysie par comparaison sociale", probleme:"Sentiment d'imposture et rumination", ton:"doux", posture:"empathique", priorite:"émotion", interdits:["confrontation directe","urgence artificielle"], cadre:"2 sessions/mois. Bienveillant avec confrontation douce.", decisions:["Pas de postulation en urgence","3 semaines d'exploration"], patterns:["Lundi = stress","Comparaison aux promus"] },
+  manelle: { name:"Manelle B.", objectif:"Identifier 1 priorité claire et réduire la surcharge", blocage:"Incapacité à dire non", probleme:"Fatigue décisionnelle et frontières floues", ton:"cadrant", posture:"structurant", priorite:"action", interdits:["plainte sans perspective","validation de l'évitement"], cadre:"Focus actionnable uniquement.", decisions:["Bloquer 1h/jour sans réunion","Supprimer 1 réunion hebdo"], patterns:["Crise fin de trimestre","Dit oui par défaut"] }
+};
+
+let cur = "ines", sessionCtx = {}, history = [], busy = false, stats = { total: 0, fallbacks: 0 };
+
+function buildPrompt(coach, client) {
+  return `Tu es Trust, assistant de continuité de coaching entre les séances.
+Tu ne remplaces jamais le coach. Tu prolonges son travail avec rigueur.
+
+OBJECTIF : Aider le client à avancer concrètement malgré le doute, la peur ou l'inaction.
+
+PROFIL COACH (OBLIGATOIRE)
+Ton : ${coach.ton} | Posture : ${coach.posture} | Priorité : ${coach.priorite}
+Interdits : ${coach.interdits?.join(", ") || "aucun"}
+Tu DOIS adapter ton style à ce profil. Sinon → réponse incorrecte.
+
+CONTEXTE CLIENT (OBLIGATOIRE)
+Objectif déclaré : ${client.objectif}
+Blocage déclaré : ${client.blocage}
+Décisions déjà prises : ${coach.decisions?.join(" / ") || "aucune"}
+Patterns connus : ${coach.patterns?.join(" / ") || "aucun"}
+Tu DOIS utiliser ce contexte. Sinon → réponse incorrecte.
+
+MOTEUR TRUST — PROTOCOLES STRICTS
+P1 CLARIFICATION : réduire à 2–3 options, forcer priorisation, éviter exploration infinie
+P2 PEUR : identifier peur réelle, séparer faits vs scénario, ramener au court terme
+P3 ACTION : identifier blocage exact, proposer action < 10 min, engager immédiatement
+P4 CRISE : ralentir, 1 seule question, recentrer présent, zéro analyse
+
+STRUCTURE IMPOSÉE
+1. Reformulation précise (sans empathie excessive)
+2. Recadrage si nécessaire
+3. 1 à 2 questions max
+4. 1 micro-action concrète
+
+RÈGLES STRICTES
+- Max 5 lignes utiles | Pas de blabla | Pas de généralités
+- Ne jamais valider la passivité | Ne jamais entretenir la rumination
+- Ne jamais contredire les décisions prises
+
+FORMAT JSON strict uniquement :
+{"proto":"clarification|peur|action|crise|neutre","rephrase":"1 ligne ou null","reframe":"1 ligne ou null","questions":["1 ou 2 max"],"micro":"1 action concrète","rappel":"décision/pattern pertinent ou null","quality":{"concision":0-100,"action_orient":0-100,"anti_rumi":0-100}}`;
+}
+
+function validateResponse(raw, ctx) {
+  let score = 0;
+  const checks = { ctx: false, q: false, len: false };
+  const lower = raw.toLowerCase();
+  const words = (ctx.objectif + " " + ctx.blocage).toLowerCase().split(" ").filter(w=>w.length>4);
+  if (words.some(w=>lower.includes(w))) { score++; checks.ctx = true; }
+  if (raw.includes("?")) { score++; checks.q = true; }
+  if (raw.length < 600) { score++; checks.len = true; }
+  return { ok: score >= 2, score, max: 3, checks };
+}
+
+function getFallback(ctx, coach) {
+  if (coach.ton==="challengeant") return `Formule en une phrase ce qui te bloque réellement sur "${ctx.objectif}".`;
+  if (coach.ton==="cadrant") return `Qu'est-ce qui est actionnable aujourd'hui sur "${ctx.objectif}" ?`;
+  return `Qu'est-ce qui te pèse le plus en ce moment par rapport à "${ctx.objectif}" ?`;
+}
+
+function sw(tab) {
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&tab==='coach')||(i===1&&tab==='supervision')||(i===2&&tab==='client')));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('p-'+tab).classList.add('active');
+}
+
+function selC(el, k) {
+  document.querySelectorAll('.ccard').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel'); cur=k; renderCoach(k);
+}
+
+function renderCoach(k) {
+  const c = CLIENTS[k];
+  const mkPills = (field, opts) => opts.map(o=>`<span class="pill ${c[field]===o?'on':''}" onclick="setPill('${k}','${field}','${o}',this)">${o}</span>`).join('');
+  const mkInt = () => { const tags=(c.interdits||[]).map((it,i)=>`<span class="interdit-tag">${it}<button onclick="CLIENTS['${k}'].interdits.splice(${i},1);renderCoach('${k}')">×</button></span>`).join(''); return `<div class="interdit-list">${tags}</div>`; };
+  document.getElementById('coach-body').innerHTML = `
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+  <div>
+    <div class="slabel">Configuration</div>
+    <div class="cfg"><label>Objectif client</label><textarea id="cfg-obj">${c.objectif}</textarea></div>
+    <div class="cfg"><label>Blocage principal</label><input type="text" id="cfg-bloc" value="${c.blocage}" /></div>
+    <div class="cfg"><label>Cadre</label><textarea id="cfg-cadre">${c.cadre}</textarea></div>
+    <div class="slabel">Profil coach</div>
+    <div class="cfg"><label>Ton</label><div class="pills">${mkPills('ton',['doux','cadrant','challengeant'])}</div></div>
+    <div class="cfg"><label>Posture</label><div class="pills">${mkPills('posture',['structurant','empathique','direct'])}</div></div>
+    <div class="cfg"><label>Priorité</label><div class="pills">${mkPills('priorite',['clarification','action','émotion'])}</div></div>
+    <div class="cfg"><label>Interdits</label>${mkInt()}<input type="text" placeholder="Ajouter…" style="width:100%;font-size:12px;padding:5px 8px;border:0.5px solid #D4CFC6;border-radius:8px;background:#fff;color:#2C1810" onkeydown="if(event.key==='Enter'&&this.value.trim()){CLIENTS['${k}'].interdits.push(this.value.trim());this.value='';renderCoach('${k}')}" /></div>
+  </div>
+  <div>
+    <div class="slabel">Mémoire client</div>
+    <div style="font-size:11px;color:#aaa;margin-bottom:5px">Décisions prises</div>
+    ${c.decisions.map((d,i)=>`<div style="font-size:12px;padding:4px 0;border-bottom:0.5px solid #eee;color:#666;display:flex;justify-content:space-between;align-items:center">✓ ${d}<button onclick="CLIENTS['${k}'].decisions.splice(${i},1);renderCoach('${k}')" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:12px">×</button></div>`).join('')}
+    <input type="text" placeholder="Ajouter une décision…" style="width:100%;font-size:12px;padding:5px 8px;border:0.5px solid #D4CFC6;border-radius:8px;background:#fff;color:#2C1810;margin-top:6px;margin-bottom:12px" onkeydown="if(event.key==='Enter'&&this.value.trim()){CLIENTS['${k}'].decisions.push(this.value.trim());this.value='';renderCoach('${k}')}" />
+    <div style="font-size:11px;color:#aaa;margin-bottom:5px">Patterns</div>
+    ${c.patterns.map((p,i)=>`<div style="font-size:12px;padding:4px 0;border-bottom:0.5px solid #eee;color:#666;display:flex;justify-content:space-between;align-items:center">◆ ${p}<button onclick="CLIENTS['${k}'].patterns.splice(${i},1);renderCoach('${k}')" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:12px">×</button></div>`).join('')}
+    <input type="text" placeholder="Ajouter un pattern…" style="width:100%;font-size:12px;padding:5px 8px;border:0.5px solid #D4CFC6;border-radius:8px;background:#fff;color:#2C1810;margin-top:6px;margin-bottom:14px" onkeydown="if(event.key==='Enter'&&this.value.trim()){CLIENTS['${k}'].patterns.push(this.value.trim());this.value='';renderCoach('${k}')}" />
+    <div class="slabel">Aperçu prompt généré</div>
+    <div class="prompt-preview" id="prompt-preview">${buildPrompt(c,c)}</div>
+  </div>
+</div>`;
+}
+
+function setPill(k,f,v,el) {
+  CLIENTS[k][f]=v; el.closest('.pills').querySelectorAll('.pill').forEach(p=>p.classList.remove('on')); el.classList.add('on');
+  const pp=document.getElementById('prompt-preview'); if(pp) pp.textContent=buildPrompt(CLIENTS[k],CLIENTS[k]);
+}
+function saveC() {
+  const o=document.getElementById('cfg-obj');if(o)CLIENTS[cur].objectif=o.value;
+  const b=document.getElementById('cfg-bloc');if(b)CLIENTS[cur].blocage=b.value;
+  const ca=document.getElementById('cfg-cadre');if(ca)CLIENTS[cur].cadre=ca.value;
+  const pp=document.getElementById('prompt-preview');if(pp)pp.textContent=buildPrompt(CLIENTS[cur],CLIENTS[cur]);
+  const btn=document.querySelector('#p-coach .pbtn');
+  if(btn){btn.textContent='Sauvegardé ✓';setTimeout(()=>btn.textContent='Sauvegarder',2000);}
+}
+
+function startSession() {
+  const obj=document.getElementById('onb-obj').value.trim();
+  const bloc=document.getElementById('onb-bloc').value.trim();
+  const coach=document.getElementById('onb-coach').value.trim();
+  if(!obj||!bloc){alert("Objectif et blocage requis.");return;}
+  sessionCtx={objectif:obj,blocage:bloc,coaching:coach};
+  document.getElementById('sup-obj').textContent=obj;
+  document.getElementById('sup-bloc').textContent="Blocage : "+bloc;
+  document.getElementById('sup-dec').innerHTML=CLIENTS[cur].decisions.map(d=>`<div class="dec-item">${d}</div>`).join('')||'<div class="dec-item">Aucune</div>';
+  document.getElementById('sup-feed-content').innerHTML='';
+  document.getElementById('onboarding').style.display='none';
+  const ca=document.getElementById('chat-area');ca.style.display='flex';ca.style.flexDirection='column';ca.style.flex='1';
+  const init={proto:"neutre",rephrase:null,reframe:`Session démarrée. Objectif : ${obj}.`,questions:["Qu'est-ce qui s'est passé depuis ta dernière séance ?"],micro:null,rappel:CLIENTS[cur].decisions.length?"Décisions en vigueur : "+CLIENTS[cur].decisions.join(" / "):null};
+  renderClientMsg(init);addFeedMsg('ai',init,false);
+}
+
+async function send() {
+  const inp=document.getElementById('ci');const msg=inp.value.trim();
+  if(!msg||busy)return;
+  inp.value='';busy=true;document.getElementById('sbtn').disabled=true;
+  const um=document.createElement('div');um.className='cm-user';um.textContent=msg;
+  document.getElementById('msgs').appendChild(um);scrollMsgs();
+  addFeedMsg('user',{text:msg});
+  history.push({role:"user",content:msg});
+  appendLoading();
+  const c=CLIENTS[cur];
+  try {
+    // ← APPEL VIA LE PROXY VERCEL (clé sécurisée côté serveur)
+    const res=await fetch("/api/chat",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({system:buildPrompt(c,sessionCtx),messages:history})
+    });
+    const data=await res.json();
+    const raw=data.content?.map(b=>b.text||"").join("")||"";
+    const validation=validateResponse(raw,sessionCtx);
+    updateValidation(validation);
+    let parsed;let isFallback=false;
+    try {
+      parsed=JSON.parse(raw.replace(/```json|```/g,"").trim());
+      if(!validation.ok){isFallback=true;stats.fallbacks++;parsed.questions=[getFallback(sessionCtx,c)];parsed.rephrase=null;parsed.reframe=null;parsed.micro=null;}
+    } catch(e){isFallback=true;stats.fallbacks++;parsed={proto:"neutre",rephrase:null,reframe:null,questions:[getFallback(sessionCtx,c)],micro:null,rappel:null,quality:{concision:50,action_orient:60,anti_rumi:60}};}
+    removeLoading();
+    renderClientMsg(parsed);addFeedMsg('ai',parsed,isFallback);
+    history.push({role:"assistant",content:JSON.stringify(parsed)});
+    stats.total++;updateQuality(parsed.quality);
+    document.getElementById('s-total').textContent=stats.total;
+    document.getElementById('s-fb').textContent=stats.fallbacks;
+    const PM={clarification:"P1 — Clarification",peur:"P2 — Peur",action:"P3 — Action",crise:"P4 — Crise",neutre:"Neutre"};
+    const PD={clarification:"Réduire le flou, forcer un choix",peur:"Faits vs scénario mental",action:"Déclencher le mouvement",crise:"Contenir, recentrer",neutre:"Exploration"};
+    document.getElementById('sup-proto').textContent=PM[parsed.proto]||"Neutre";
+    document.getElementById('sup-proto-desc').textContent=PD[parsed.proto]||"";
+  } catch(e){removeLoading();const em=document.createElement('div');em.className='cm-ai';em.textContent="Erreur de connexion.";document.getElementById('msgs').appendChild(em);}
+  busy=false;document.getElementById('sbtn').disabled=false;
+}
+
+function renderClientMsg(p){const d=document.getElementById('msgs');const m=document.createElement('div');m.className='cm-ai';let h='';if(p.rappel)h+=`<div class="rappel-line">${p.rappel}</div>`;if(p.rephrase)h+=`<div class="rephrase">${p.rephrase}</div>`;if(p.reframe)h+=`<div class="reframe">${p.reframe}</div>`;if(p.questions?.length)p.questions.forEach(q=>h+=`<div class="q">${q}</div>`);if(p.micro)h+=`<div class="micro">${p.micro}</div>`;m.innerHTML=h;d.appendChild(m);scrollMsgs();}
+const PC={clarification:"p-clarif",peur:"p-peur",action:"p-action",crise:"p-crise",neutre:"p-neutre"};
+const PN={clarification:"P1",peur:"P2",action:"P3",crise:"P4",neutre:"—"};
+function addFeedMsg(type,data,isFallback){const f=document.getElementById('sup-feed-content');const m=document.createElement('div');if(type==='user'){m.className='feed-msg feed-user';m.innerHTML=`<div class="feed-meta">Client</div>${data.text}`;}else{m.className='feed-msg feed-ai'+(isFallback?' feed-fb':'');const tag=data.proto?`<span class="ptag-sm ${PC[data.proto]||'p-neutre'}">${PN[data.proto]||'—'}</span>`:'';const fb=isFallback?` <span style="font-size:10px;color:#854F0B">⚡ fallback</span>`:'';let content='';if(data.rephrase)content+=`<em style="color:#888;font-size:12px">${data.rephrase}</em><br>`;if(data.reframe)content+=data.reframe+'<br>';if(data.questions?.length)data.questions.forEach(q=>content+=`<strong>${q}</strong><br>`);if(data.micro)content+=`<span style="color:#888;font-size:12px">→ ${data.micro}</span>`;m.innerHTML=`<div class="feed-meta">Trust${tag}${fb}</div>${content}`;}f.appendChild(m);f.scrollTop=f.scrollHeight;}
+function appendLoading(){const d=document.getElementById('msgs');const m=document.createElement('div');m.className='cm-ai';m.id='lm';m.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';d.appendChild(m);scrollMsgs();}
+function removeLoading(){const e=document.getElementById('lm');if(e)e.remove();}
+function scrollMsgs(){const d=document.getElementById('msgs');if(d)d.scrollTop=d.scrollHeight;}
+function updateValidation(v){const set=(id,ok,txt)=>{const el=document.getElementById(id);if(el){el.textContent=txt;el.className='val-score '+(ok?'score-ok':'score-ko');}};set('vs-ctx',v.checks.ctx,v.checks.ctx?'✓':'✗');set('vs-q',v.checks.q,v.checks.q?'✓':'✗');set('vs-len',v.checks.len,v.checks.len?'✓':'✗');const st=document.getElementById('vs-total');if(st){st.textContent=v.score+'/'+v.max;st.className='val-score '+(v.score>=2?'score-ok':v.score===1?'score-fb':'score-ko');}const sb=document.getElementById('vs-status');if(sb){sb.textContent=v.ok?'Validé':'Fallback';sb.className='val-badge '+(v.ok?'val-ok':'val-fb');}}
+function updateQuality(q){if(!q)return;const set=(b,v,val)=>{const be=document.getElementById(b);if(be)be.style.width=val+'%';const ve=document.getElementById(v);if(ve)ve.textContent=val+'%';};set('qb1','qv1',q.concision||0);set('qb2','qv2',q.action_orient||0);set('qb3','qv3',q.anti_rumi||0);}
+
+renderCoach('ines');
+</script>
+</body>
+</html>
